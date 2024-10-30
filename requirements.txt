@@ -1,2 +1,7 @@
 pandas
-numpy 
+numpy
+python-dotenv # to read the .env file
+mysql-connector-python
+pymysql 
+scikit-learn
+#-e
