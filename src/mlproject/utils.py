@@ -36,43 +36,131 @@
 #         raise CustomException(ex)
 
 
+# import os
+# import sys
+# from src.mlproject.exception import CustomException  # from exception.py import CustomException function
+# from src.mlproject.logger import logging  # from logger.py import logging function
+# import pandas as pd
+# from dotenv import load_dotenv  # To load all environment variables
+# import pymysql  # To connect SQL workbench with Python
+
+# # Load environment variables from .env file
+# load_dotenv()
+
+# # Get SQL connection information from environment variables
+# host = os.getenv("host")
+# user = os.getenv("user")
+# password = os.getenv("password")
+# db = os.getenv("db")
+
+# def read_sql_data():  # This function reads data from SQL and is called in data ingestion
+#     logging.info("Reading SQL database started...")
+#     try:
+#         # Establish SQL connection
+#         mydb = pymysql.connect(
+#             host=host,
+#             user=user,
+#             password=password,
+#             db=db
+#         )
+#         logging.info(f"Connection Established to database '{db}'")
+
+#         # Read SQL data into a pandas DataFrame
+#         df = pd.read_sql_query('SELECT * FROM students', mydb)
+#         print(df.head())
+
+#         # Close connection
+#         mydb.close()
+        
+#         return df
+        
+#     except Exception as ex:
+#         raise CustomException(ex, sys)
+
+
+
+
 import os
 import sys
-from src.mlproject.exception import CustomException  # from exception.py import CustomException function
-from src.mlproject.logger import logging  # from logger.py import logging function
+from src.mlproject.exception import CustomException
+from src.mlproject.logger import logging
 import pandas as pd
-from dotenv import load_dotenv  # To load all environment variables
-import pymysql  # To connect SQL workbench with Python
+from dotenv import load_dotenv
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import r2_score
+import pymysql
 
-# Load environment variables from .env file
+import pickle
+import numpy as np
+
 load_dotenv()
 
-# Get SQL connection information from environment variables
-host = os.getenv("host")
-user = os.getenv("user")
-password = os.getenv("password")
-db = os.getenv("db")
+host=os.getenv("host")
+user=os.getenv("user")
+password=os.getenv("password")
+db=os.getenv('db')
 
-def read_sql_data():  # This function reads data from SQL and is called in data ingestion
-    logging.info("Reading SQL database started...")
+
+
+def read_sql_data():
+    logging.info("Reading SQL database started")
     try:
-        # Establish SQL connection
-        mydb = pymysql.connect(
+        mydb=pymysql.connect(
             host=host,
             user=user,
             password=password,
             db=db
         )
-        logging.info(f"Connection Established to database '{db}'")
-
-        # Read SQL data into a pandas DataFrame
-        df = pd.read_sql_query('SELECT * FROM students', mydb)
+        logging.info("Connection Established",mydb)
+        df=pd.read_sql_query('Select * from students',mydb)
         print(df.head())
 
-        # Close connection
-        mydb.close()
-        
         return df
-        
+
+
+
     except Exception as ex:
-        raise CustomException(ex, sys)
+        raise CustomException(ex)
+    
+def save_object(file_path, obj):
+    try:
+        dir_path = os.path.dirname(file_path)
+
+        os.makedirs(dir_path, exist_ok=True)
+
+        with open(file_path, "wb") as file_obj:
+            pickle.dump(obj, file_obj)
+
+    except Exception as e:
+        raise CustomException(e, sys)
+
+def evaluate_models(X_train, y_train,X_test,y_test,models,param):
+    try:
+        report = {}
+
+        for i in range(len(list(models))):
+            model = list(models.values())[i]
+            para=param[list(models.keys())[i]]
+
+            gs = GridSearchCV(model,para,cv=3)
+            gs.fit(X_train,y_train)
+
+            model.set_params(**gs.best_params_)
+            model.fit(X_train,y_train)
+
+            #model.fit(X_train, y_train)  # Train model
+
+            y_train_pred = model.predict(X_train)
+
+            y_test_pred = model.predict(X_test)
+
+            train_model_score = r2_score(y_train, y_train_pred)
+
+            test_model_score = r2_score(y_test, y_test_pred)
+
+            report[list(models.keys())[i]] = test_model_score
+
+        return report
+
+    except Exception as e:
+        raise CustomException(e, sys)

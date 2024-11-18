@@ -50,6 +50,7 @@
         
         
 import os
+import os.path
 import sys
 from src.mlproject.exception import CustomException
 from src.mlproject.logger import logging
@@ -72,7 +73,7 @@ class DataIngestion:
     def initiate_data_ingestion(self):
         try:
             # Reading the data from MySQL
-            df = read_sql_data()
+            df = pd.read_csv(os.path.join('notebook/data','raw.csv'))
             logging.info("Completed reading data from MySQL database")
 
             os.makedirs(os.path.dirname(self.ingestion_config.train_data_path), exist_ok=True)

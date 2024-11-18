@@ -4,4 +4,7 @@ python-dotenv # to read the .env file
 mysql-connector-python
 pymysql 
 scikit-learn
+seaborn
+catboost
+xgboost
 #-e
